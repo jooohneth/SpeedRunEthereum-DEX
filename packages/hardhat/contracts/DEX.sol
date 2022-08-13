@@ -5,18 +5,15 @@ pragma solidity >=0.8.0 <0.9.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-/**
- * @title DEX Template
- * @author stevepham.eth and m00npapi.eth
- * @notice Empty DEX.sol that just outlines what features could be part of the challenge (up to you!)
- * @dev We want to create an automatic market where our contract will hold reserves of both ETH and 🎈 Balloons. These reserves will provide liquidity that allows anyone to swap between the assets.
- * NOTE: functions outlined here are what work with the front end of this branch/repo. Also return variable names that may need to be specified exactly may be referenced (if you are confused, see solutions folder in this repo and/or cross reference with front-end code).
- */
+
 contract DEX {
     /* ========== GLOBAL VARIABLES ========== */
 
     using SafeMath for uint256; //outlines use of SafeMath for uint256 variables
     IERC20 token; //instantiates the imported contract
+
+    uint public totalLiquidity;
+    mapping(address => uint) public liquidity;
 
     /* ========== EVENTS ========== */
 
@@ -54,7 +51,18 @@ contract DEX {
      * @return totalLiquidity is the number of LPTs minting as a result of deposits made to DEX contract
      * NOTE: since ratio is 1:1, this is fine to initialize the totalLiquidity (wrt to balloons) as equal to eth balance of contract.
      */
-    function init(uint256 tokens) public payable returns (uint256) {}
+    function init(uint256 tokens) public payable returns (uint256) {
+
+        require(totalLiquidity == 0, "Fail: can't call init if totalLiquidity != 0");
+
+        totalLiquidity = address(this).balance;
+        liquidity[msg.sender] = totalLiquidity;
+
+        require(token.transferFrom(msg.sender, address(this), tokens), "Failed to transfer!");
+        
+        return totalLiquidity;
+
+    }
 
     /**
      * @notice returns yOutput, or yDelta for xInput (or xDelta)
