@@ -59,7 +59,7 @@ contract DEX {
         liquidity[msg.sender] = totalLiquidity;
 
         require(token.transferFrom(msg.sender, address(this), tokens), "Failed to transfer!");
-        
+
         return totalLiquidity;
 
     }
@@ -68,11 +68,14 @@ contract DEX {
      * @notice returns yOutput, or yDelta for xInput (or xDelta)
      * @dev Follow along with the [original tutorial](https://medium.com/@austin_48503/%EF%B8%8F-minimum-viable-exchange-d84f30bd0c90) Price section for an understanding of the DEX's pricing model and for a price function to add to your contract. You may need to update the Solidity syntax (e.g. use + instead of .add, * instead of .mul, etc). Deploy when you are done.
      */
-    function price(
-        uint256 xInput,
-        uint256 xReserves,
-        uint256 yReserves
-    ) public view returns (uint256 yOutput) {}
+    function price(uint256 xInput, uint256 xReserves, uint256 yReserves) public pure returns (uint256 yOutput) {
+
+        uint256 xInputWithFee = xInput.mul(997);
+        uint256 numerator = xInputWithFee.mul(yReserves);
+        uint256 denominator = (xReserves.mul(1000)).add(xInputWithFee);
+        return (numerator / denominator);
+        
+    }
 
     /**
      * @notice returns liquidity for a user. Note this is not needed typically due to the `liquidity()` mapping variable being public and having a getter as a result. This is left though as it is used within the front end code (App.jsx).
