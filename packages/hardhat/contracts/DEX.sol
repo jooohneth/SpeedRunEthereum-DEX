@@ -84,7 +84,9 @@ contract DEX {
      * if you are using a mapping liquidity, then you can use `return liquidity[lp]` to get the liquidity for a user.
      *
      */
-    function getLiquidity(address lp) public view returns (uint256) {}
+    function getLiquidity(address lp) public view returns (uint256) {
+        return liquidity[lp];
+    }
 
     /**
      * @notice sends Ether to DEX in exchange for $BAL
