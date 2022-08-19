@@ -20,22 +20,22 @@ contract DEX {
     /**
      * @notice Emitted when ethToToken() swap transacted
      */
-    event EthToTokenSwap();
+    event EthToTokenSwap(address indexed trader, string action, uint ethInput, uint tokenOutput);
 
     /**
      * @notice Emitted when tokenToEth() swap transacted
      */
-    event TokenToEthSwap();
+    event TokenToEthSwap(address indexed trader, string action, uint tokenInput, uint ethOutput);
 
     /**
      * @notice Emitted when liquidity provided to DEX and mints LPTs.
      */
-    event LiquidityProvided();
+    event LiquidityProvided(address indexed liquidityProvider, uint liquidityAmount, uint ethAmount, uint tokenAmount);
 
     /**
      * @notice Emitted when liquidity removed from DEX and decreases LPT count within DEX.
      */
-    event LiquidityRemoved();
+    event LiquidityRemoved(address indexed liquidityProvider, uint liquidityAmount, uint ethAmount, uint tokenAmount);
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -101,6 +101,8 @@ contract DEX {
 
         require(token.transfer(msg.sender, tokenOutput), "Token transfer failed!");
 
+        emit EthToTokenSwap(msg.sender, "ETH to Token", msg.value, tokenOutput);
+
     }
 
     /**
@@ -118,6 +120,9 @@ contract DEX {
 
         (bool success, ) = msg.sender.call{value: ethOutput}("");
         require(success, "ETH transfer failed!");
+
+        emit TokenToEthSwap(msg.sender, "Token to ETH", tokenInput, ethOutput);
+
     }
 
     /**
@@ -139,6 +144,8 @@ contract DEX {
         totalLiquidity += liquidityMinted;
 
         require(token.transferFrom(msg.sender, address(this), tokenAmount));
+
+        emit LiquidityProvided(msg.sender, liquidityMinted, msg.value, tokenAmount);
 
     }
 
@@ -163,6 +170,8 @@ contract DEX {
         require(success, "Transaction failed!");
 
         require(token.transfer(msg.sender, tokenAmount));
+
+        emit LiquidityRemoved(msg.sender, amount, ethAmount, tokenAmount);
 
     }
 }
