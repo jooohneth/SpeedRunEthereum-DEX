@@ -40,7 +40,7 @@ contract DEX {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(address token_addr) public {
-        token = IERC20(token_addr); //specifies the token address that will hook into the interface and be used through the variable 'token'
+        token = IERC20(token_addr); //specifies the token add ress that will hook into the interface and be used through the variable 'token'
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -124,11 +124,43 @@ contract DEX {
      * NOTE: user has to make sure to give DEX approval to spend their tokens on their behalf by calling approve function prior to this function call.
      * NOTE: Equal parts of both assets will be removed from the user's wallet with respect to the price outlined by the AMM.
      */
-    function deposit() public payable returns (uint256 tokensDeposited) {}
+    function deposit() public payable returns (uint256 tokenAmount) {
+
+        uint ethReserve = address(this).balance - msg.value;
+        uint tokenReserve = token.balanceOf(address(this));
+
+        ///xDeposit = yDeposit * xReserve / yReserve
+        tokenAmount = (msg.value * tokenReserve / ethReserve) + 1;
+
+        uint liquidityMinted = msg.value * totalLiquidity / ethReserve;
+        liquidity[msg.sender]  += liquidityMinted;
+        totalLiquidity += liquidityMinted;
+
+        require(token.transferFrom(msg.sender, address(this), tokenAmount));
+
+    }
 
     /**
      * @notice allows withdrawal of $BAL and $ETH from liquidity pool
      * NOTE: with this current code, the msg caller could end up getting very little back if the liquidity is super low in the pool. I guess they could see that with the UI.
      */
-    function withdraw(uint256 amount) public returns (uint256 eth_amount, uint256 token_amount) {}
+    function withdraw(uint256 amount) public returns (uint256 ethAmount, uint256 tokenAmount) {
+
+        require(liquidity[msg.sender] >= amount, "Not enough Liquidity to withdraw!");
+
+        uint ethReserve = address(this).balance;
+        uint tokenReserve = token.balanceOf(address(this));
+
+        ethAmount = amount * ethReserve / totalLiquidity;
+        tokenAmount = amount * tokenReserve / totalLiquidity;
+
+        liquidity[msg.sender] -= amount;
+        totalLiquidity -= amount;
+
+        (bool success, ) = msg.sender.call{value: ethAmount}("");
+        require(success, "Transaction failed!");
+
+        require(token.transfer(msg.sender, tokenAmount));
+
+    }
 }
