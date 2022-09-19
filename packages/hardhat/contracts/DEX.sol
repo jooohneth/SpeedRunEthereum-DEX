@@ -88,65 +88,65 @@ contract DEX {
 
     ///@notice Swaps Token to ETH 
     ///@dev Price function calculated using price function
-    function tokenToEth(uint tokenInput) public returns (uint ethOutput) {
+    function tokenToEth(uint tokenInput) public returns (uint tokenOutput) {
         require(tokenInput > 0, "Proved Tokens to swap!");
 
         uint xReserve = token.balanceOf(address(this));
         uint yReserve = address(this).balance;
 
-        ethOutput = price(tokenInput, xReserve, yReserve);
+        tokenOutput = price(tokenInput, xReserve, yReserve);
 
         require(token.transferFrom(msg.sender, address(this), tokenInput), "Token transfer failed!");
 
-        (bool success, ) = msg.sender.call{value: ethOutput}("");
+        (bool success, ) = msg.sender.call{value: tokenOutput}("");
         require(success, "ETH transfer failed!");
 
-        emit TokenToEthSwap(msg.sender, "Token to ETH", tokenInput, ethOutput);
+        emit TokenToEthSwap(msg.sender, "Token to ETH", tokenInput, tokenOutput);
 
     }
 
     ///@notice Deposits ETH and Token to liquidity pool
-    ///@return tokenAmount Amount of tokens needed for the amount of ETH provided to keep the ration in liquidity pool
-    function deposit() public payable returns (uint tokenAmount) {
+    ///@return tokenDeposit Amount of tokens needed for the amount of ETH provided to keep the ration in liquidity pool
+    function deposit() public payable returns (uint tokenDeposit) {
 
         uint ethReserve = address(this).balance - msg.value;
         uint tokenReserve = token.balanceOf(address(this));
 
-        tokenAmount = (msg.value * tokenReserve / ethReserve) + 1;
+        tokenDeposit = (msg.value * tokenReserve / ethReserve) + 1;
 
         uint liquidityMinted = msg.value * totalLiquidity / ethReserve;
         liquidity[msg.sender]  += liquidityMinted;
         totalLiquidity += liquidityMinted;
 
-        require(token.transferFrom(msg.sender, address(this), tokenAmount));
+        require(token.transferFrom(msg.sender, address(this), tokenDeposit));
 
-        emit LiquidityProvided(msg.sender, liquidityMinted, msg.value, tokenAmount);
+        emit LiquidityProvided(msg.sender, liquidityMinted, msg.value, tokenDeposit);
 
     }
 
     ///@notice Withdraws ETH and Token from liquidity pool
     ///@param amount Amount of liquidity provided
-    ///@return ethAmount Amount of ETH to be withdrawn
-    ///@return tokenAmount Amount of Tokens to be withdrawn
-    function withdraw(uint amount) public returns (uint ethAmount, uint tokenAmount) {
+    ///@return ethOutput Amount of ETH to be withdrawn
+    ///@return tokenOutput Amount of Tokens to be withdrawn
+    function withdraw(uint amount) public returns (uint ethOutput, uint tokenOutput) {
 
         require(liquidity[msg.sender] >= amount, "Not enough Liquidity to withdraw!");
 
         uint ethReserve = address(this).balance;
         uint tokenReserve = token.balanceOf(address(this));
 
-        ethAmount = amount * ethReserve / totalLiquidity;
-        tokenAmount = amount * tokenReserve / totalLiquidity;
+        ethOutput = amount * ethReserve / totalLiquidity;
+        tokenOutput = amount * tokenReserve / totalLiquidity;
 
         liquidity[msg.sender] -= amount;
         totalLiquidity -= amount;
 
-        (bool success, ) = msg.sender.call{value: ethAmount}("");
+        (bool success, ) = msg.sender.call{value: ethOutput}("");
         require(success, "Transaction failed!");
 
-        require(token.transfer(msg.sender, tokenAmount));
+        require(token.transfer(msg.sender, tokenOutput));
 
-        emit LiquidityRemoved(msg.sender, amount, ethAmount, tokenAmount);
+        emit LiquidityRemoved(msg.sender, amount, ethOutput, tokenOutput);
 
     }
 }
